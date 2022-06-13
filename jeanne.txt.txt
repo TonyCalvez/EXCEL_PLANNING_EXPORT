@@ -1,0 +1,48 @@
+Sub JEANNE()
+Dim DerniereLigne As Integer, n As Integer, i As Integer, oldcol As Integer, col As Integer
+
+Dim candidatcase As String
+Dim nouvellefeuille As String, feuillejour As String
+
+'feuillejour = ActiveSheet.Name
+nouvellefeuille = feuillejour + "_export"
+Worksheets(nouvellefeuille).Delete
+Sheets.Add.Name = nouvellefeuille
+Sheets(nouvellefeuille).Range("A1").Value = "Heure"
+Sheets(nouvellefeuille).Range("B1").Value = "Heure"
+Sheets(nouvellefeuille).Range("C1").Value = "Eleve"
+Sheets(nouvellefeuille).Range("D1").Value = "Matiere"
+
+
+
+i = 2
+oldcol = 0
+
+For col = 3 To 25
+DerniereLigne = Sheets(feuillejour).Range("A1").SpecialCells(xlCellTypeLastCell).Row
+
+    For n = 2 To DerniereLigne
+    
+            If Sheets(feuillejour).Cells(n, col) <> "" Then
+                'Sheets(nouvellefeuille).Range("C" & i).Value = Sheets(feuillejour).Range("C" & n)
+                'Sheets(nouvellefeuille).Range("D" & i).Value = Sheets(feuillejour).Range("C1")
+                Sheets(nouvellefeuille).Range("C" & i).Value = Sheets(feuillejour).Cells(n, col)
+                Sheets(nouvellefeuille).Range("D" & i).Value = Sheets(feuillejour).Cells(1, col)
+                
+                
+                If col = oldcol Then
+                'Sheets(nouvellefeuille).Range("A" & i).Value = Format(Sheets(feuillejour).Range("A" & n), "h:mm")
+                Sheets(nouvellefeuille).Range("A" & i).Value = Format(Sheets(feuillejour).Cells(n, 1), "h:mm")
+                'Sheets(nouvellefeuille).Range("B" & i - 1).Value = Format(Sheets(feuillejour).Range("A" & n), "h:mm")
+                Sheets(nouvellefeuille).Range("B" & i - 1).Value = Format(Sheets(feuillejour).Cells(n, 1), "h:mm")
+                End If
+                
+                i = i + 1
+                oldcol = col
+                
+            End If
+    
+    Next
+Next
+End Sub
+
