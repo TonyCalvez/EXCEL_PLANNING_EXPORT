@@ -1,11 +1,129 @@
-Sub export_excel_to_word()
-    Set obj = CreateObject("Word.Application")
-    obj.Visible = True
-    Set newObj = obj.Documents.Add
-    ActiveSheet.UsedRange.Copy
-    newObj.Range.Paste
-    Application.CutCopyMode = False
-    obj.Activate
-    newObj.SaveAs Filename:=Application.ActiveWorkbook.Path & "\" & ActiveSheet.Name
+Sub GenerationListes()
+Dim DerniereLigne As Integer, oldline As Integer, line As Integer, i As Integer, oldcol As Integer, col As Integer
+
+Dim candidatcase As String
+Dim nouvellefeuille As String, feuillejour As String
+
+feuillejour = Replace(ActiveSheet.Name, "_export", "")
+nouvellefeuille = feuillejour + "_export"
+
+For Each Sheet In ActiveWorkbook.Worksheets
+     If Sheet.Name = nouvellefeuille Then
+          Worksheets(nouvellefeuille).Delete
+     End If
+Next Sheet
+
+
+Sheets.Add.Name = nouvellefeuille
+Sheets(nouvellefeuille).Range("A1").Value = "Heure"
+Sheets(nouvellefeuille).Range("B1").Value = "Heure"
+Sheets(nouvellefeuille).Range("C1").Value = "Eleve"
+Sheets(nouvellefeuille).Range("D1").Value = "Matiere"
+
+
+
+i = 2
+oldcol = 0
+
+For col = 3 To 25
+DerniereLigne = Sheets(feuillejour).Range("A1").SpecialCells(xlCellTypeLastCell).Row
+
+    For line = 2 To DerniereLigne
+    
+            If Sheets(feuillejour).Cells(line, col) <> "" Then
+                'Sheets(nouvellefeuille).Range("C" & i).Value = Sheets(feuillejour).Range("C" & line)
+                'Sheets(nouvellefeuille).Range("D" & i).Value = Sheets(feuillejour).Range("C1")
+                Sheets(nouvellefeuille).Range("C" & i).Value = Sheets(feuillejour).Cells(line, col)
+                Sheets(nouvellefeuille).Range("D" & i).Value = Sheets(feuillejour).Cells(1, col)
+                
+                
+                If col = oldcol Then
+                    'Sheets(nouvellefeuille).Range("A" & i).Value = Format(Sheets(feuillejour).Range("A" & line), "h:mm")
+                    Sheets(nouvellefeuille).Range("A" & i).Value = Format(Sheets(feuillejour).Cells(line, 1), "h:mm")
+                    'Sheets(nouvellefeuille).Range("B" & i - 1).Value = Format(Sheets(feuillejour).Range("A" & line), "h:mm")
+                    Sheets(nouvellefeuille).Range("B" & i - 1).Value = Format(Sheets(feuillejour).Cells(line, 1), "h:mm")
+                        
+                End If
+                
+                i = i + 1
+                oldcol = col
+                
+            End If
+    
+    Next
+Next
 End Sub
 
+
+
+Sub GenerationEmargement()
+    'GENERATION ELEVES
+    ActiveWorkbook.Worksheets(ActiveSheet.Name).AutoFilter.Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets(ActiveSheet.Name).AutoFilter.Sort.SortFields.Add2 _
+        Key:=Range("A1:A1000"), SortOn:=xlSortOnValues, Order:=xlAscending, _
+        DataOption:=xlSortNormal
+    With ActiveWorkbook.Worksheets(ActiveSheet.Name).AutoFilter.Sort
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    
+    Dim ws As Worksheet, cl As Range, ky As Variant
+    Set ws = Sheets(ActiveSheet.Name)
+    
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    
+    With CreateObject("scripting.dictionary")
+        For Each cl In ws.Range("C2", ws.Range("C" & Rows.Count).End(xlUp))
+            .Item(cl.Value) = Empty
+        Next cl
+        For Each ky In .Keys
+            ws.Range("A1").AutoFilter 3, ky
+            Workbooks.Add
+            ws.AutoFilter.Range.EntireRow.Copy Range("A1")
+            ActiveWorkbook.SaveAs Filename:=ThisWorkbook.Path & "\" & ky & ".xlsx"
+            ActiveWorkbook.ExportAsFixedFormat Type:=xlTypePDF, _
+                Filename:=ThisWorkbook.Path & "\" & ky & ".pdf"
+            ActiveWorkbook.Close False
+        Next ky
+    End With
+    ws.ShowAllData
+    
+    'GENERATION PROFS
+        ActiveWorkbook.Worksheets(ActiveSheet.Name).AutoFilter.Sort.SortFields.Clear
+    ActiveWorkbook.Worksheets(ActiveSheet.Name).AutoFilter.Sort.SortFields.Add2 _
+        Key:=Range("A1:A1000"), SortOn:=xlSortOnValues, Order:=xlAscending, _
+        DataOption:=xlSortNormal
+    With ActiveWorkbook.Worksheets(ActiveSheet.Name).AutoFilter.Sort
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    
+    Dim ws As Worksheet, cl As Range, ky As Variant
+    Set ws = Sheets(ActiveSheet.Name)
+    
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    
+    With CreateObject("scripting.dictionary")
+        For Each cl In ws.Range("D2", ws.Range("D" & Rows.Count).End(xlUp))
+            .Item(cl.Value) = Empty
+        Next cl
+        For Each ky In .Keys
+            ws.Range("A1").AutoFilter 4, ky
+            Workbooks.Add
+            ws.AutoFilter.Range.EntireRow.Copy Range("A1")
+            ActiveWorkbook.SaveAs Filename:=ThisWorkbook.Path & "\" & ky & ".xlsx"
+            ActiveWorkbook.ExportAsFixedFormat Type:=xlTypePDF, _
+                Filename:=ThisWorkbook.Path & "\" & ky & ".pdf"
+            ActiveWorkbook.Close False
+        Next ky
+    End With
+    ws.ShowAllData
+End Sub
