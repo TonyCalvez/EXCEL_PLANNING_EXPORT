@@ -1,0 +1,39 @@
+Sub ComparerCommentaires()
+
+    Dim wbOld As Workbook, wbNew As Workbook
+    Dim wsOld As Worksheet, wsNew As Worksheet
+    Dim i As Long, lastRow As Long
+    Dim numExigenceOld As String, commentaireOld As String, commentaireNew As String
+    Dim resultSheet As Worksheet
+    Dim rowResult As Long
+
+    ' Modifier selon les noms de fichiers ouverts
+    Set wbOld = Workbooks("Ancien.xlsx")
+    Set wbNew = Workbooks("Nouveau.xlsx")
+    Set wsOld = wbOld.Sheets(1)
+    Set wsNew = wbNew.Sheets(1)
+    
+    lastRow = wsOld.Cells(wsOld.Rows.Count, 1).End(xlUp).Row
+    
+    Set resultSheet = ThisWorkbook.Sheets.Add
+    resultSheet.Name = "Commentaires modifiés"
+    resultSheet.Range("A1:D1").Value = Array("N° Exigence", "Commentaire Ancien", "Commentaire Nouveau", "Statut")
+    rowResult = 2
+
+    For i = 2 To lastRow
+        numExigenceOld = wsOld.Cells(i, 1).Value
+        commentaireOld = wsOld.Cells(i, 3).Value
+        commentaireNew = wsNew.Cells(i, 3).Value
+        
+        If commentaireOld <> commentaireNew Then
+            resultSheet.Cells(rowResult, 1).Value = numExigenceOld
+            resultSheet.Cells(rowResult, 2).Value = commentaireOld
+            resultSheet.Cells(rowResult, 3).Value = commentaireNew
+            resultSheet.Cells(rowResult, 4).Value = "Modifié"
+            rowResult = rowResult + 1
+        End If
+    Next i
+
+    MsgBox "Commentaires comparés avec succès. Voir feuille 'Commentaires modifiés'."
+
+End Sub
