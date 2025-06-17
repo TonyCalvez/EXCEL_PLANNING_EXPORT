@@ -1,0 +1,65 @@
+! --- Déclarations et vérifications initiales ---
+object Load, LdfCmd, term, terms;
+double PkW, Uval, Ival;
+integer err;
+
+// Récupération de l'objet charge "Load" (type ElmLod)
+Load = GetFromStudyCase('ElmLod','Load');
+if (!Load) then
+    Print('Erreur : la charge "Load" est introuvable.');
+    abort;
+endif;
+
+// Récupération de la commande de flux de charge ComLdf
+LdfCmd = GetCaseCommand('ComLdf');
+if (!LdfCmd) then
+    Print('Erreur : la commande de flux de charge (ComLdf) est introuvable.');
+    abort;
+endif;
+
+// Récupération du terminal de la charge (on suppose un seul terminal)
+terms = Load.GetContents();
+term = terms.Firstmatch('ElmTerm');
+if (!term) then
+    Print('Erreur : le terminal de la charge est introuvable.');
+    abort;
+endif;
+
+! --- Ouverture du fichier CSV pour écriture ---
+fileID = fopen('C:\\temp\\Load_results.csv','w',0); ! mode "w" écrase ou crée le fichier
+fprintf(fileID, 'P_kW;U_V;I_A\n');  ! Écriture de l'entête CSV
+
+! --- Boucle d'incrémentation de la charge ---
+StartTime = GetTickCount();  ! ***Procédure hypothétique pour le temps (DPL ne dispose pas nativement de Chrono)***
+for (PkW = 0.1; PkW <= 2000.0; PkW = PkW + 0.1) {
+    // Vérification du temps écoulé (si >180s, on interrompt)
+    if ((GetTickCount() - StartTime) > 180000) then {
+        Print('Temps maximum de 180s atteint, arrêt du script.');
+        break;
+    }
+    // Définir la puissance active de la charge (en kW)
+    Load:plini = PkW;
+
+    // Exécuter le flux de charge
+    err = LdfCmd.Execute();
+    if (err) then {
+        Print('Erreur lors du calcul de flux de charge.');
+        break;
+    }
+    // Vérifier que le flux de charge a bien convergé
+    if (!validLDF()) then {
+        Print('Résultat de flux de charge invalide.');
+        break;
+    }
+
+    // Récupérer la tension (m:u) et le courant (m:i) au terminal de la charge
+    term.GetVal(Uval,'m:u');
+    term.GetVal(Ival,'m:i');
+    
+    // Écrire les résultats (P en kW, U en V, I en A) dans le CSV
+    fprintf(fileID, '%f;%f;%f\n', PkW, Uval, Ival);
+}
+
+! --- Fermeture du fichier et fin de script ---
+fclose(fileID);
+Print('Script DPL terminé normalement.');
