@@ -1,0 +1,43 @@
+// DPL script pour incrémenter une charge et exporter les résultats
+
+// Déclaration
+object objLoad;            // Objet charge
+object objLF;              // Load Flow
+real P_start := 0.1;       // Début : 0.1 kW
+real P_end := 2000.0;      // Fin : 2000 kW
+real P_step := 0.1;        // Pas : 0.1 kW
+real P_now;
+int i := 0;
+string filename;
+
+// Références objets
+objLoad := Foldr('NameOfYourLoadObject');    // Remplace par le nom exact
+objLF := ActiveStudyCase()->GetContents('ComLdf')[0]; // Load Flow dans le SC
+
+// Boucle sur la puissance
+for (P_now := P_start; P_now <= P_end; P_now := P_now + P_step) {
+
+    i := i + 1;
+    
+    // Mettre à jour la charge
+    objLoad:outserv := 0; // Activer si désactivée
+    objLoad:P := P_now / 1000.0; // En MW (car P est en MW)
+
+    // Exécuter le load flow
+    if (objLF:Execute() <> 0) {
+        Write('Erreur à P = ', P_now:5:2, ' kW');
+        continue;
+    }
+
+    // Export CSV - chaque fichier nommé selon la puissance
+    filename := 'results_LF_' + IntToStr(i) + '_P_' + FloatToStr(P_now, 0, 1) + 'kW.csv';
+    
+    // Exemple d'export de la grille entière (ajuste selon tes besoins)
+    // Export des résultats des nœuds
+    G.ExportCsv(filename, 'ElmTerm', 0); // 0 = tous les résultats visibles
+    
+    // Pause possible ou log
+    Write('Exporté : ', filename);
+}
+
+WriteLn('Script terminé');
