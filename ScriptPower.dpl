@@ -1,0 +1,57 @@
+// Script DPL : balayage de charge et export CSV des résultats
+
+// Déclarations
+object objLoad;            // Objet de la charge à modifier
+object objLF;              // Objet Load Flow
+real P_start = 0.1;        // Puissance de départ (kW)
+real P_end = 2000.0;       // Puissance finale (kW)
+real P_step = 0.1;         // Pas d'incrémentation (kW)
+real P_now;                // Puissance actuelle (kW)
+int i = 0;                 // Compteur
+string filename = "";      // Nom du fichier CSV
+
+// === Références aux objets ===
+// Remplacer le nom 'MyLoad' par celui de ta charge réelle dans PowerFactory
+objLoad = Foldr('MyLoad'); // Exemple : 'Lod1' ou nom complet 'LV Network.ElmLod 1'
+objLF = ActiveStudyCase()->GetContents('ComLdf')[0]; // Premier objet de type Load Flow
+
+// === Vérification de l'existence des objets ===
+if (objLoad == 0) {
+    WriteLn('Erreur : Objet charge non trouvé.');
+    return;
+}
+if (objLF == 0) {
+    WriteLn('Erreur : Objet Load Flow non trouvé.');
+    return;
+}
+
+// === Boucle de balayage ===
+for (P_now = P_start; P_now <= P_end; P_now = P_now + P_step) {
+
+    i = i + 1;
+
+    // Activer la charge si nécessaire
+    objLoad:outserv = 0;
+
+    // Affecter la nouvelle valeur de charge (en MW)
+    objLoad:P = P_now / 1000.0;
+
+    // Exécuter le load flow
+    if (objLF:Execute() <> 0) {
+        WriteLn('⚠️ Échec du Load Flow à P = ', P_now:5:2, ' kW');
+        continue;
+    }
+
+    // Construire le nom du fichier CSV
+    // Exemple : results_P_12.3kW.csv
+    filename = 'results_P_' + FloatToStr(P_now, 0, 1) + 'kW.csv';
+
+    // Exporter les résultats des nœuds (ElmTerm), visibles dans l'étude
+    // Tu peux aussi exporter ElmLod, ElmTr2, etc. selon besoin
+    G.ExportCsv(filename, 'ElmTerm', 0); // 0 = résultats visibles uniquement
+
+    // Log
+    WriteLn('✅ Export : ', filename);
+}
+
+WriteLn('✔️ Balayage terminé.');
