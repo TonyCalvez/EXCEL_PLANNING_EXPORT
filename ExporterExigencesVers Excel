@@ -1,0 +1,26 @@
+Sub ExporterExigencesVersExcel()
+    Dim xlApp As Object
+    Dim xlBook As Object
+    Dim xlSheet As Object
+    Dim parag As Paragraph
+    Dim ligne As Long
+
+    Set xlApp = CreateObject("Excel.Application")
+    xlApp.Visible = True
+    Set xlBook = xlApp.Workbooks.Add
+    Set xlSheet = xlBook.Sheets(1)
+
+    xlSheet.Cells(1, 1).Value = "ID"
+    xlSheet.Cells(1, 2).Value = "Description"
+
+    ligne = 2
+
+    For Each parag In ActiveDocument.Paragraphs
+        If parag.Style = "TitreExigence" Then
+            xlSheet.Cells(ligne, 1).Value = parag.Range.Text
+        ElseIf parag.Style = "TexteExigence" Then
+            xlSheet.Cells(ligne, 2).Value = parag.Range.Text
+            ligne = ligne + 1
+        End If
+    Next parag
+End Sub
